@@ -481,16 +481,16 @@ export default function App() {
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
 
-          // Cap resolution at 720p height for better performance on mobile
-          const targetHeight = 1280;
-          const originalWidth = renderVideo.videoWidth || 720;
-          const originalHeight = renderVideo.videoHeight || 1280;
+          // Cap resolution at 1080p height for high quality
+          const targetHeight = 1920;
+          const originalWidth = renderVideo.videoWidth || 1080;
+          const originalHeight = renderVideo.videoHeight || 1920;
           const aspectRatio = originalWidth / originalHeight;
           
           canvas.height = Math.min(originalHeight, targetHeight);
           canvas.width = Math.round(canvas.height * aspectRatio);
           
-          console.log("Dimensões do canvas:", canvas.width, "x", canvas.height);
+          console.log("Dimensões do canvas (Alta Qualidade):", canvas.width, "x", canvas.height);
 
           if (renderVideo.readyState < 3) { 
             await new Promise((resolve) => {
@@ -511,26 +511,27 @@ export default function App() {
 
           let stream: MediaStream;
           try {
-            // Force 30fps for consistent playback speed
-            stream = canvas.captureStream(30);
+            // Use 60fps for maximum fluidity
+            stream = canvas.captureStream(60);
           } catch (e) {
             try {
-              stream = (canvas as any).captureStream(30);
+              stream = (canvas as any).captureStream(60);
             } catch (e2) {
               throw new Error("Seu dispositivo não suporta gravação de vídeo.");
             }
           }
           
-          // Force WebM for duration fixing reliability
+          // Prioritize MP4 for better compatibility if supported (especially on iOS)
           const types = [
-            'video/webm;codecs=vp8,opus',
-            'video/webm;codecs=vp9,opus',
-            'video/webm',
             'video/mp4;codecs=h264,aac',
             'video/mp4;codecs=h264',
-            'video/mp4'
+            'video/mp4',
+            'video/webm;codecs=vp8,opus',
+            'video/webm;codecs=vp9,opus',
+            'video/webm'
           ];
           const mimeType = types.find(t => MediaRecorder.isTypeSupported(t)) || '';
+          const isWebM = mimeType.includes('webm');
           
           if (!stream || stream.getTracks().length === 0) {
             throw new Error("Falha ao iniciar o fluxo de vídeo.");
@@ -540,7 +541,7 @@ export default function App() {
           try {
             recorder = new MediaRecorder(stream, { 
               mimeType: mimeType || undefined,
-              videoBitsPerSecond: 6000000 
+              videoBitsPerSecond: 12000000 // 12 Mbps for high quality
             });
           } catch (err) {
             throw new Error("Erro ao configurar o gravador de vídeo.");
@@ -562,19 +563,18 @@ export default function App() {
             }
 
             // Ensure the final blob has the correct mime type
-            const rawBlob = new Blob(chunks, { type: mimeType || 'video/webm' });
+            const rawBlob = new Blob(chunks, { type: mimeType || 'video/mp4' });
             const finalDurationMs = Math.round(maxDuration * 1000);
             
-            console.log("Iniciando correção de duração para:", finalDurationMs, "ms");
+            console.log("Final blob size:", rawBlob.size, "Type:", rawBlob.type);
 
-            // Fix WebM duration metadata
-            ysFixWebmDuration(rawBlob, finalDurationMs, async (fixedBlob) => {
-              console.log("Blob fixado:", fixedBlob.size, "bytes", "Tipo:", fixedBlob.type);
-              setRenderedBlob(fixedBlob);
+            const processFinalBlob = async (blob: Blob) => {
+              setRenderedBlob(blob);
               
               if (currentHistoryId) {
                 const renderedId = `rendered_${currentHistoryId}`;
-                const renderedFile = new File([fixedBlob], `palavra_${Date.now()}.mp4`, { type: fixedBlob.type });
+                const extension = blob.type.includes('mp4') ? 'mp4' : 'webm';
+                const renderedFile = new File([blob], `palavra_${Date.now()}.${extension}`, { type: blob.type });
                 await saveVideoToDB(renderedId, renderedFile);
                 setHistory(prev => prev.map(h => 
                   h.id === currentHistoryId ? { ...h, renderedVideoId: renderedId } : h
@@ -583,7 +583,16 @@ export default function App() {
 
               setIsRendering(false);
               setRenderProgress(0);
-            });
+            };
+
+            if (isWebM) {
+              console.log("Iniciando correção de duração para WebM:", finalDurationMs, "ms");
+              ysFixWebmDuration(rawBlob, finalDurationMs, (fixedBlob) => {
+                processFinalBlob(fixedBlob);
+              });
+            } else {
+              processFinalBlob(rawBlob);
+            }
           };
 
           // Adjust font sizes based on resolution (scaling from 1080p base)
@@ -629,7 +638,7 @@ export default function App() {
           let lastVideoTime = -1;
           let lastCheckTime = Date.now();
 
-          const fps = 30;
+          const fps = 60;
           const frameInterval = 1000 / fps;
           let lastFrameTime = Date.now();
 
@@ -642,18 +651,25 @@ export default function App() {
             const now = Date.now();
             const elapsed = now - lastFrameTime;
 
+            // Draw as fast as possible but cap at target FPS
             if (elapsed >= frameInterval) {
               lastFrameTime = now - (elapsed % frameInterval);
 
-              // Draw frame only if video is ready
+              // Draw frame - even if video isn't perfectly ready, we draw something to keep stream alive
+              ctx.imageSmoothingEnabled = true;
+              ctx.imageSmoothingQuality = 'high';
+              
+              // Draw background (black) first
+              ctx.fillStyle = 'black';
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+
               if (renderVideo.readyState >= 2) {
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
                 ctx.drawImage(renderVideo, 0, 0, canvas.width, canvas.height);
-                
-                // Overlay darkness
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+              }
+              
+              // Overlay darkness
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
 
                 // Draw Logo
                 if (logoImg && logoImg.complete) {
@@ -719,7 +735,6 @@ export default function App() {
                 ctx.moveTo(canvas.width / 2 + offset, refY);
                 ctx.lineTo(canvas.width / 2 + offset + lineLength, refY);
                 ctx.stroke();
-              }
 
               framesDrawn++;
               // Start recording after a few frames to ensure stability
