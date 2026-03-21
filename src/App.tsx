@@ -937,7 +937,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col font-sans selection:bg-gold/30">
+    <div className="min-h-screen flex flex-col font-serif selection:bg-action-tan/30 nature-gradient">
       {/* Full Screen Render Overlay */}
       <AnimatePresence>
         {showRenderOverlay && (
@@ -945,20 +945,20 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[10000] bg-navy flex flex-col items-center justify-center p-6"
+            className="fixed inset-0 z-[10000] bg-text-dark flex flex-col items-center justify-center p-6"
           >
-            <div className="relative w-full max-w-[300px] aspect-[9/16] bg-black rounded-2xl overflow-hidden shadow-2xl border-2 border-gold/30 mb-8">
+            <div className="relative w-full max-w-[300px] aspect-[9/16] bg-black rounded-2xl overflow-hidden shadow-2xl border-2 border-action-tan/30 mb-8">
               <canvas 
                 ref={renderCanvasRef}
                 className="w-full h-full object-contain"
               />
               <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white p-4 text-center">
-                <div className="w-12 h-12 border-4 border-gold border-t-transparent rounded-full animate-spin mb-4" />
-                <h3 className="font-display text-lg tracking-widest text-gold mb-2">GERANDO VÍDEO</h3>
+                <div className="w-12 h-12 border-4 border-action-tan border-t-transparent rounded-full animate-spin mb-4" />
+                <h3 className="font-display text-lg tracking-widest text-action-tan mb-2 uppercase">GERANDO VÍDEO</h3>
                 <p className="text-xs opacity-70 mb-4">Mantenha esta tela aberta e o celular ligado.</p>
                 <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
                   <motion.div 
-                    className="h-full bg-gold"
+                    className="h-full bg-action-tan"
                     initial={{ width: 0 }}
                     animate={{ width: `${renderProgress}%` }}
                   />
@@ -984,46 +984,46 @@ export default function App() {
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 20 }}
             exit={{ opacity: 0, y: -50 }}
-            className="fixed top-0 left-1/2 -translate-x-1/2 z-[100] bg-navy text-gold px-6 py-3 rounded-full shadow-2xl border border-gold/50 font-display text-xs tracking-widest uppercase flex items-center gap-2"
+            className="fixed top-0 left-1/2 -translate-x-1/2 z-[100] bg-text-dark text-action-tan px-6 py-3 rounded-full shadow-2xl border border-action-tan/50 font-display text-xs tracking-widest uppercase flex items-center gap-2"
           >
-            <div className="w-2 h-2 bg-gold rounded-full animate-pulse" />
+            <div className="w-2 h-2 bg-action-tan rounded-full animate-pulse" />
             {toast}
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Header */}
-      <header className="sacred-gradient text-white py-8 px-6 shadow-2xl border-b-2 border-gold/40">
+      <header className="bg-white/80 backdrop-blur-md text-text-dark py-10 px-6 shadow-sm border-b border-text-muted/10">
         {!genAI && (
-          <div className="bg-red-500/20 border border-red-500/50 text-red-200 text-[10px] py-1 text-center mb-4 rounded">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-600 text-[10px] py-1 text-center mb-4 rounded">
             Atenção: Chave API não configurada. Configure GEMINI_API_KEY no ambiente.
           </div>
         )}
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-gold/20 rounded-full border border-gold/50">
-              <BookOpen className="w-8 h-8 text-gold" />
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="flex items-center gap-5">
+            <div className="p-4 bg-secondary-green/10 rounded-full border border-secondary-green/20">
+              <BookOpen className="w-10 h-10 text-secondary-green" />
             </div>
             <div>
-              <h1 className="font-display text-3xl tracking-widest text-gold uppercase">A Palavra Diária</h1>
-              <p className="text-xs text-white/60 tracking-[0.2em] font-light mt-1">MEDITAÇÃO E COMPARTILHAMENTO</p>
+              <h1 className="font-display text-4xl font-bold tracking-tight text-text-dark">A PALAVRA DIÁRIA</h1>
+              <p className="text-sm text-text-muted tracking-[0.15em] font-medium mt-1">MEDITAÇÃO E COMPARTILHAMENTO</p>
             </div>
           </div>
           
-          <nav className="flex gap-1 bg-white/5 p-1 rounded-full border border-white/10">
+          <nav className="flex gap-2 bg-text-muted/5 p-1.5 rounded-full border border-text-muted/10">
             {[
-              { id: 'search', icon: Search, label: 'Busca' },
-              { id: 'history', icon: History, label: 'Histórico' },
-              { id: 'favorites', icon: Star, label: 'Favoritos' }
+              { id: 'search', icon: Search, label: 'BUSCA', color: 'bg-primary-blue' },
+              { id: 'history', icon: History, label: 'HISTÓRICO', color: 'bg-text-dark' },
+              { id: 'favorites', icon: Star, label: 'FAVORITOS', color: 'bg-secondary-green' }
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
                 className={cn(
-                  "flex items-center gap-2 px-6 py-2 rounded-full text-sm transition-all duration-300",
+                  "flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold tracking-widest transition-all duration-300",
                   activeTab === tab.id 
-                    ? "bg-gold text-navy font-semibold shadow-lg" 
-                    : "text-white/70 hover:text-white hover:bg-white/10"
+                    ? `${tab.color} text-white shadow-md` 
+                    : "text-text-muted hover:text-text-dark hover:bg-text-muted/10"
                 )}
               >
                 <tab.icon className="w-4 h-4" />
@@ -1045,14 +1045,14 @@ export default function App() {
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-6"
               >
-                <div className="flex gap-2 mb-4">
+                <div className="flex gap-3 mb-6">
                   <button
                     onClick={() => setSearchMode('keyword')}
                     className={cn(
-                      "flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all border",
+                      "flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all border",
                       searchMode === 'keyword' 
-                        ? "bg-navy text-gold border-gold" 
-                        : "bg-white text-navy/40 border-navy/10 hover:border-navy/20"
+                        ? "bg-primary-blue text-white border-primary-blue shadow-md" 
+                        : "bg-white text-text-muted border-text-muted/10 hover:border-text-muted/30"
                     )}
                   >
                     Palavra-Chave
@@ -1060,10 +1060,10 @@ export default function App() {
                   <button
                     onClick={() => setSearchMode('reference')}
                     className={cn(
-                      "flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all border",
+                      "flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all border",
                       searchMode === 'reference' 
-                        ? "bg-navy text-gold border-gold" 
-                        : "bg-white text-navy/40 border-navy/10 hover:border-navy/20"
+                        ? "bg-primary-blue text-white border-primary-blue shadow-md" 
+                        : "bg-white text-text-muted border-text-muted/10 hover:border-text-muted/30"
                     )}
                   >
                     Referência
@@ -1076,27 +1076,27 @@ export default function App() {
                       type="text"
                       value={keyword}
                       onChange={(e) => setKeyword(e.target.value)}
-                      placeholder="Digite uma palavra-chave (ex: Amor, Fé, Paz)..."
-                      className="w-full bg-white border-2 border-navy/10 focus:border-gold rounded-xl py-4 pl-12 pr-4 outline-none transition-all shadow-sm group-hover:shadow-md"
+                      placeholder="Digite uma palavra-chave..."
+                      className="w-full bg-white border border-text-muted/20 focus:border-action-tan rounded-xl py-4 pl-12 pr-4 outline-none transition-all shadow-sm group-hover:shadow-md soft-border"
                     />
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-navy/40 group-focus-within:text-gold transition-colors" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted group-focus-within:text-action-tan transition-colors" />
                     <button 
                       type="submit"
                       disabled={loading}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-navy text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-navy/90 disabled:opacity-50 transition-all"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-action-tan text-white px-6 py-2 rounded-lg text-sm font-bold uppercase tracking-wider hover:bg-action-tan/90 disabled:opacity-50 transition-all"
                     >
-                      {loading ? 'Buscando...' : 'Buscar'}
+                      {loading ? '...' : 'Buscar'}
                     </button>
                   </form>
                 ) : (
-                  <form onSubmit={handleReferenceSearch} className="grid grid-cols-12 gap-2">
+                  <form onSubmit={handleReferenceSearch} className="grid grid-cols-12 gap-3">
                     <div className="col-span-6 relative group">
                       <input
                         type="text"
                         value={book}
                         onChange={(e) => setBook(e.target.value)}
                         placeholder="Livro (ex: João)"
-                        className="w-full bg-white border-2 border-navy/10 focus:border-gold rounded-xl py-4 pl-4 pr-4 outline-none transition-all shadow-sm group-hover:shadow-md text-sm"
+                        className="w-full bg-white border border-text-muted/20 focus:border-action-tan rounded-xl py-4 pl-4 pr-4 outline-none transition-all shadow-sm group-hover:shadow-md text-sm soft-border"
                       />
                     </div>
                     <div className="col-span-3 relative group">
@@ -1105,7 +1105,7 @@ export default function App() {
                         value={chapter}
                         onChange={(e) => setChapter(e.target.value)}
                         placeholder="Cap."
-                        className="w-full bg-white border-2 border-navy/10 focus:border-gold rounded-xl py-4 pl-4 pr-4 outline-none transition-all shadow-sm group-hover:shadow-md text-sm"
+                        className="w-full bg-white border border-text-muted/20 focus:border-action-tan rounded-xl py-4 pl-4 pr-4 outline-none transition-all shadow-sm group-hover:shadow-md text-sm soft-border"
                       />
                     </div>
                     <div className="col-span-3 relative group">
@@ -1114,30 +1114,30 @@ export default function App() {
                         value={verseNumber}
                         onChange={(e) => setVerseNumber(e.target.value)}
                         placeholder="Ver."
-                        className="w-full bg-white border-2 border-navy/10 focus:border-gold rounded-xl py-4 pl-4 pr-4 outline-none transition-all shadow-sm group-hover:shadow-md text-sm"
+                        className="w-full bg-white border border-text-muted/20 focus:border-action-tan rounded-xl py-4 pl-4 pr-4 outline-none transition-all shadow-sm group-hover:shadow-md text-sm soft-border"
                       />
                     </div>
                     <button 
                       type="submit"
                       disabled={loading}
-                      className="col-span-12 bg-navy text-white py-3 rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-navy/90 disabled:opacity-50 transition-all shadow-lg"
+                      className="col-span-12 bg-action-tan text-white py-4 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-action-tan/90 disabled:opacity-50 transition-all shadow-lg"
                     >
-                      {loading ? 'Buscando Referência...' : 'Buscar Versículo'}
+                      {loading ? 'Buscando...' : 'Buscar Versículo'}
                     </button>
                   </form>
                 )}
 
                 <div className="space-y-4">
-                  <h2 className="font-display text-lg text-navy/60 flex items-center gap-2">
-                    <ChevronRight className="w-4 h-4 text-gold" />
-                    Resultados da Bíblia
+                  <h2 className="font-display text-xl font-bold text-text-dark flex items-center gap-2">
+                    <ChevronRight className="w-5 h-5 text-secondary-green" />
+                    RESULTADOS DA BÍBLIA
                   </h2>
                   
                   <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                     {verses.length === 0 && !loading && (
-                      <div className="text-center py-12 border-2 border-dashed border-navy/5 rounded-2xl">
-                        <BookOpen className="w-12 h-12 text-navy/10 mx-auto mb-3" />
-                        <p className="text-navy/40 text-sm italic">Nenhum versículo encontrado ainda.</p>
+                      <div className="text-center py-16 border-2 border-dashed border-text-muted/10 rounded-2xl bg-white/30">
+                        <BookOpen className="w-16 h-16 text-text-muted/20 mx-auto mb-4" />
+                        <p className="text-text-muted text-sm italic">Nenhum versículo encontrado ainda.</p>
                       </div>
                     )}
 
@@ -1149,49 +1149,49 @@ export default function App() {
                         key={`${v.reference}-${idx}`}
                         onClick={() => handleSelectVerse(v)}
                         className={cn(
-                          "p-5 rounded-2xl cursor-pointer transition-all border-2 group relative",
+                          "p-6 rounded-2xl cursor-pointer transition-all border group relative",
                           selectedVerse?.reference === v.reference
-                            ? "bg-navy text-white border-gold shadow-xl scale-[1.02]"
-                            : "bg-white border-navy/5 hover:border-gold/30 hover:shadow-md"
+                            ? "bg-white text-text-dark border-secondary-green shadow-xl scale-[1.02] ring-1 ring-secondary-green/20"
+                            : "bg-white/60 border-text-muted/5 hover:border-secondary-green/30 hover:shadow-md"
                         )}
                       >
-                        <div className="flex justify-between items-start mb-2">
+                        <div className="flex justify-between items-start mb-3">
                           <span className={cn(
-                            "font-display text-sm tracking-widest",
-                            selectedVerse?.reference === v.reference ? "text-gold" : "text-navy/60"
+                            "font-display text-sm font-bold tracking-widest",
+                            selectedVerse?.reference === v.reference ? "text-secondary-green" : "text-text-muted"
                           )}>
                             {v.reference}
                           </span>
-                          <div className="flex gap-1">
+                          <div className="flex gap-2">
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation();
                                 copyToClipboard(`"${v.text}" - ${v.reference}`);
                               }}
-                              className="p-1 rounded-full hover:bg-white/10 transition-colors"
+                              className="p-1.5 rounded-full hover:bg-text-muted/5 transition-colors"
                               title="Copiar texto"
                             >
-                              <Copy className={cn("w-4 h-4", selectedVerse?.reference === v.reference ? "text-white/40" : "text-navy/20")} />
+                              <Copy className={cn("w-4 h-4", selectedVerse?.reference === v.reference ? "text-text-dark/40" : "text-text-muted/20")} />
                             </button>
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation();
                                 toggleFavorite(v);
                               }}
-                              className="p-1 rounded-full hover:bg-white/10 transition-colors"
+                              className="p-1.5 rounded-full hover:bg-text-muted/5 transition-colors"
                             >
                               <Star className={cn(
                                 "w-4 h-4",
                                 favorites.some(f => f.reference === v.reference) 
-                                  ? "fill-gold text-gold" 
-                                  : (selectedVerse?.reference === v.reference ? "text-white/40" : "text-navy/20")
+                                  ? "fill-secondary-green text-secondary-green" 
+                                  : (selectedVerse?.reference === v.reference ? "text-text-dark/40" : "text-text-muted/20")
                               )} />
                             </button>
                           </div>
                         </div>
                         <p className={cn(
-                          "font-serif text-base leading-relaxed italic",
-                          selectedVerse?.reference === v.reference ? "text-white" : "text-navy/80"
+                          "font-serif text-lg leading-relaxed italic",
+                          selectedVerse?.reference === v.reference ? "text-text-dark" : "text-text-muted"
                         )}>
                           "{v.text}"
                         </p>
@@ -1306,7 +1306,7 @@ export default function App() {
         {/* Right Column: Video Preview & Overlay */}
         <div className="lg:col-span-7">
           <div className="sticky top-6 space-y-6">
-            <div className="bg-navy rounded-3xl overflow-hidden shadow-2xl border-4 border-gold/20 aspect-[9/16] max-h-[70vh] mx-auto relative group">
+            <div className="bg-text-dark rounded-3xl overflow-hidden shadow-2xl border-4 border-action-tan/20 aspect-[9/16] max-h-[80vh] mx-auto relative group">
               {videoUrl ? (
                 <>
                   <video 
@@ -1329,8 +1329,8 @@ export default function App() {
                   />
                   
                   {videoError && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-navy/90 p-6 text-center z-50">
-                      <Video className="w-12 h-12 text-gold/50 mb-4" />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-text-dark/90 p-6 text-center z-50">
+                      <Video className="w-12 h-12 text-action-tan/50 mb-4" />
                       <p className="text-white font-bold mb-4">Erro ao carregar o vídeo</p>
                       <button 
                         onClick={() => {
@@ -1339,7 +1339,7 @@ export default function App() {
                             videoRef.current.load();
                           }
                         }}
-                        className="px-6 py-2 bg-gold text-navy font-bold rounded-full hover:bg-white transition-colors"
+                        className="px-6 py-2 bg-action-tan text-white font-bold rounded-full hover:bg-white transition-colors"
                       >
                         Tentar Recarregar
                       </button>
@@ -1353,18 +1353,18 @@ export default function App() {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
-                        className="absolute inset-0 flex items-center justify-center p-8 bg-black/30 pointer-events-none"
+                        className="absolute inset-0 flex items-center justify-center p-10 bg-black/35 pointer-events-none"
                       >
-                        <div className="text-center space-y-4 max-w-lg">
-                          <p className="font-serif text-xl md:text-2xl text-white italic leading-relaxed drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                        <div className="text-center space-y-6 max-w-lg">
+                          <p className="font-serif text-2xl md:text-3xl text-white italic leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
                             "{selectedVerse.text}"
                           </p>
-                          <div className="flex items-center justify-center gap-3">
-                            <div className="h-[1px] w-8 bg-gold/60" />
-                            <span className="font-display text-sm tracking-[0.3em] text-gold drop-shadow-md">
+                          <div className="flex items-center justify-center gap-4">
+                            <div className="h-[1px] w-10 bg-action-tan/60" />
+                            <span className="font-display text-base font-bold tracking-[0.25em] text-action-tan drop-shadow-lg uppercase">
                               {selectedVerse.reference}
                             </span>
-                            <div className="h-[1px] w-8 bg-gold/60" />
+                            <div className="h-[1px] w-10 bg-action-tan/60" />
                           </div>
                         </div>
                       </motion.div>
@@ -1375,25 +1375,25 @@ export default function App() {
                 </>
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-white/20 p-12 text-center">
-                  <Upload className="w-16 h-16 mb-4 stroke-1" />
-                  <p className="font-display text-sm tracking-widest uppercase">Faça upload de um vídeo para começar</p>
-                  <p className="text-xs mt-2 opacity-50">O versículo selecionado aparecerá aqui como overlay</p>
+                  <Upload className="w-20 h-20 mb-6 stroke-1" />
+                  <p className="font-display text-lg tracking-widest uppercase font-bold">Faça upload de um vídeo</p>
+                  <p className="text-sm mt-3 opacity-50 font-serif italic">O versículo selecionado aparecerá aqui como overlay</p>
                 </div>
               )}
             </div>
 
-            <div className="glass-card rounded-2xl p-6 space-y-4">
+            <div className="glass-card rounded-3xl p-8 space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="font-display text-sm text-navy/80 tracking-widest uppercase">Configurações de Mídia</h3>
+                <h3 className="font-display text-sm text-text-dark font-bold tracking-widest uppercase">Configurações de Mídia</h3>
                 <div className="flex gap-4">
-                  <label className="text-xs text-gold hover:underline cursor-pointer font-bold uppercase tracking-tighter flex items-center gap-1">
+                  <label className="text-xs text-action-tan hover:underline cursor-pointer font-bold uppercase tracking-tighter flex items-center gap-1">
                     <Upload className="w-3 h-3" />
                     Logo Marca
                     <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
                   </label>
                   {videoUrl && (
                     <>
-                      <label className="text-xs text-gold hover:underline cursor-pointer font-bold uppercase tracking-tighter">
+                      <label className="text-xs text-action-tan hover:underline cursor-pointer font-bold uppercase tracking-tighter">
                         Trocar Vídeo
                         <input type="file" accept="video/*" onChange={handleVideoUpload} className="hidden" />
                       </label>
@@ -1414,78 +1414,78 @@ export default function App() {
               </div>
 
               {logoUrl && (
-                <div className="flex items-center gap-3 p-3 bg-gold/5 rounded-xl border border-gold/20">
-                  <div className="w-10 h-10 rounded-full overflow-hidden border border-gold/30 bg-white">
+                <div className="flex items-center gap-4 p-4 bg-action-tan/5 rounded-2xl border border-action-tan/20">
+                  <div className="w-12 h-12 rounded-full overflow-hidden border border-action-tan/30 bg-white">
                     <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-[10px] font-bold text-navy/60 uppercase">Logo Ativa</p>
-                    <p className="text-[9px] text-navy/40">Sua logo aparecerá no topo dos vídeos gerados.</p>
+                    <p className="text-[10px] font-bold text-text-dark uppercase tracking-wider">Logo Ativa</p>
+                    <p className="text-[9px] text-text-muted">Sua logo aparecerá no topo dos vídeos gerados.</p>
                   </div>
                   <button 
                     onClick={() => setLogoUrl(null)}
-                    className="p-1 hover:bg-red-50 rounded-full text-red-400 transition-colors"
+                    className="p-1.5 hover:bg-red-50 rounded-full text-red-400 transition-colors"
                   >
-                    <Trash2 className="w-3 h-3" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               )}
 
               <div className="grid grid-cols-1 gap-4">
                 {!videoUrl ? (
-                  <label className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-gold/30 rounded-xl cursor-pointer hover:bg-gold/5 transition-colors group">
+                  <label className="flex flex-col items-center justify-center gap-3 p-10 border-2 border-dashed border-action-tan/20 rounded-2xl cursor-pointer hover:bg-action-tan/5 transition-colors group">
                     {isRendering ? (
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="w-6 h-6 border-2 border-gold border-t-transparent rounded-full animate-spin" />
-                        <span className="text-[10px] font-bold uppercase tracking-tighter text-gold">Processando Vídeo...</span>
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-8 h-8 border-3 border-action-tan border-t-transparent rounded-full animate-spin" />
+                        <span className="text-[10px] font-bold uppercase tracking-tighter text-action-tan">Processando Vídeo...</span>
                       </div>
                     ) : (
                       <>
-                        <Upload className="w-6 h-6 text-gold group-hover:scale-110 transition-transform" />
-                        <span className="text-xs font-medium text-navy/60">Selecionar Vídeo Local</span>
+                        <Upload className="w-8 h-8 text-action-tan group-hover:scale-110 transition-transform" />
+                        <span className="text-sm font-bold text-text-muted uppercase tracking-widest">Selecionar Vídeo Local</span>
                         <input type="file" accept="video/*" onChange={handleVideoUpload} className="hidden" />
                       </>
                     )}
                   </label>
                 ) : !renderedBlob ? (
-                  <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-4">
                     {videoDuration > 0 && (
-                      <div className="flex items-center justify-center gap-2 py-1 px-3 bg-gold/20 rounded-full self-center">
-                        <div className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
-                        <span className="text-[10px] font-bold text-gold uppercase tracking-widest">
+                      <div className="flex items-center justify-center gap-2 py-1.5 px-4 bg-action-tan/10 rounded-full self-center">
+                        <div className="w-2 h-2 rounded-full bg-action-tan animate-pulse" />
+                        <span className="text-[10px] font-bold text-action-tan uppercase tracking-widest">
                           Duração: {videoDuration.toFixed(1)}s
                         </span>
                       </div>
                     )}
                     {!selectedVerse && (
-                      <div className="p-3 bg-gold/10 border border-gold/30 rounded-xl text-center">
-                        <p className="text-[10px] text-navy/70 uppercase font-bold tracking-wider">
+                      <div className="p-4 bg-action-tan/5 border border-action-tan/20 rounded-2xl text-center">
+                        <p className="text-[10px] text-text-dark uppercase font-bold tracking-wider">
                           ⚠️ Selecione um versículo primeiro
                         </p>
                       </div>
                     )}
-                    <div className="grid grid-cols-1 gap-3">
+                    <div className="grid grid-cols-1 gap-4">
                       <div 
                         className={cn(
-                          "flex flex-col items-center justify-center gap-2 p-6 bg-navy text-white rounded-xl transition-all shadow-lg relative overflow-hidden w-full",
-                          (!videoUrl || !selectedVerse || isRendering) ? "opacity-50 cursor-not-allowed" : "hover:bg-navy/90 hover:shadow-xl cursor-pointer"
+                          "flex flex-col items-center justify-center gap-3 p-8 bg-text-dark text-white rounded-2xl transition-all shadow-lg relative overflow-hidden w-full",
+                          (!videoUrl || !selectedVerse || isRendering) ? "opacity-50 cursor-not-allowed" : "hover:bg-text-dark/90 hover:shadow-xl cursor-pointer"
                         )}
                         onClick={() => {
                           if (!videoUrl || !selectedVerse || isRendering) return;
                           handleRender();
                         }}
                       >
-                        <Video className="w-6 h-6 text-gold" />
-                        <span className="text-xs font-medium uppercase tracking-widest">Gerar Vídeo para Compartilhar</span>
+                        <Video className="w-8 h-8 text-action-tan" />
+                        <span className="text-sm font-bold uppercase tracking-widest">Gerar Vídeo para Compartilhar</span>
                       </div>
                       
                       <button 
                         onClick={handleDownloadImage}
                         disabled={!videoUrl || !selectedVerse || isRendering}
-                        className="flex items-center justify-center gap-2 p-4 border-2 border-gold/30 text-gold rounded-xl hover:bg-gold/5 transition-all disabled:opacity-30"
+                        className="flex items-center justify-center gap-3 p-5 border-2 border-action-tan/30 text-action-tan rounded-2xl hover:bg-action-tan/5 transition-all disabled:opacity-30"
                       >
-                        <Download className="w-4 h-4" />
-                        <span className="text-xs font-bold uppercase tracking-tighter">Baixar Imagem (Alternativa Rápida)</span>
+                        <Download className="w-5 h-5" />
+                        <span className="text-sm font-bold uppercase tracking-widest">Baixar Imagem Rápida</span>
                       </button>
                     </div>
                   </div>
@@ -1493,57 +1493,41 @@ export default function App() {
                   <div className="grid grid-cols-2 gap-4">
                     <button 
                       onClick={handleShare}
-                      className="flex flex-col items-center justify-center gap-2 p-6 bg-navy text-white rounded-xl hover:bg-navy/90 transition-all shadow-lg hover:shadow-xl"
+                      className="flex flex-col items-center justify-center gap-3 p-8 bg-text-dark text-white rounded-2xl hover:bg-text-dark/90 transition-all shadow-lg hover:shadow-xl"
                     >
-                      <Share2 className="w-6 h-6 text-gold" />
-                      <span className="text-xs font-medium">
+                      <Share2 className="w-8 h-8 text-action-tan" />
+                      <span className="text-xs font-bold uppercase tracking-widest">
                         {canNativeShare ? 'Compartilhar' : 'Baixar p/ Postar'}
                       </span>
                     </button>
                     <button 
                       onClick={handleDownload}
-                      className="flex flex-col items-center justify-center gap-2 p-6 bg-gold text-navy rounded-xl hover:bg-gold/90 transition-all shadow-lg hover:shadow-xl"
+                      className="flex flex-col items-center justify-center gap-3 p-8 bg-action-tan text-white rounded-2xl hover:bg-action-tan/90 transition-all shadow-lg hover:shadow-xl"
                     >
-                      <Download className="w-6 h-6 text-navy" />
-                      <span className="text-xs font-medium">Salvar Galeria</span>
+                      <Download className="w-8 h-8 text-white" />
+                      <span className="text-xs font-bold uppercase tracking-widest">Salvar Galeria</span>
                     </button>
                     <button 
                       onClick={() => copyToClipboard(`"${selectedVerse.text}" - ${selectedVerse.reference}`)}
-                      className="col-span-2 flex items-center justify-center gap-2 p-3 bg-navy/5 text-navy rounded-xl border border-navy/20 hover:bg-navy/10 transition-all"
+                      className="col-span-2 flex items-center justify-center gap-3 p-4 bg-text-muted/5 text-text-dark rounded-2xl border border-text-muted/10 hover:bg-text-muted/10 transition-all"
                     >
-                      <Copy className="w-4 h-4" />
-                      <span className="text-xs font-medium">Copiar Legenda do Versículo</span>
+                      <Copy className="w-5 h-5" />
+                      <span className="text-xs font-bold uppercase tracking-widest">Copiar Legenda do Versículo</span>
                     </button>
                     <button 
                       onClick={() => setRenderedBlob(null)}
-                      className="col-span-2 text-xs text-navy/40 hover:text-navy transition-colors py-2 font-bold uppercase tracking-widest border-t border-navy/5 mt-2"
+                      className="col-span-2 text-xs text-text-muted hover:text-text-dark transition-colors py-3 font-bold uppercase tracking-widest border-t border-text-muted/5 mt-2"
                     >
                       Gerar outro com este vídeo
                     </button>
-                    
-                    <label className="col-span-2 flex items-center justify-center gap-2 p-3 bg-gold/10 text-gold rounded-xl border border-gold/30 hover:bg-gold/20 transition-all cursor-pointer">
-                      <Video className="w-4 h-4" />
-                      <span className="text-xs font-bold uppercase tracking-tighter">Usar outro vídeo local</span>
-                      <input type="file" accept="video/*" onChange={handleVideoUpload} className="hidden" />
-                    </label>
-                    
-                    <div className="col-span-2 p-4 bg-gold/10 rounded-xl border border-gold/30">
-                      <p className="text-[10px] text-navy/80 leading-relaxed">
-                        <strong className="text-navy uppercase block mb-1">Configurações de Renderização:</strong>
-                        • Vídeo otimizado para redes sociais.<br/>
-                        • Bitrate adaptativo para máxima compatibilidade.<br/>
-                        • Mantenha esta aba ativa durante o processo.<br/>
-                        • O vídeo será salvo automaticamente no seu histórico.
-                      </p>
-                    </div>
                   </div>
                 )}
               </div>
 
               {!selectedVerse && (
-                <div className="flex items-center gap-2 p-3 bg-gold/10 rounded-lg border border-gold/20">
-                  <BookOpen className="w-4 h-4 text-gold" />
-                  <p className="text-[10px] text-navy/70 font-medium">Dica: Selecione um versículo na lista à esquerda para ver o overlay.</p>
+                <div className="flex items-center gap-3 p-4 bg-action-tan/5 rounded-2xl border border-action-tan/20">
+                  <BookOpen className="w-5 h-5 text-action-tan" />
+                  <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">Dica: Selecione um versículo na lista à esquerda para ver o overlay.</p>
                 </div>
               )}
             </div>
@@ -1551,16 +1535,23 @@ export default function App() {
         </div>
       </main>
 
-      <footer className="py-8 px-6 border-t border-navy/5 text-center">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <Cross className="w-4 h-4 text-gold" />
+      <footer className="py-12 px-6 border-t border-text-muted/10 text-center bg-white/50">
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <BookOpen className="w-5 h-5 text-secondary-green" />
+          <div className="h-[1px] w-12 bg-text-muted/20" />
+          <Cross className="w-5 h-5 text-action-tan" />
         </div>
-        <p className="text-[10px] text-navy/40 tracking-[0.4em] uppercase">
+        <h4 className="font-display text-lg font-bold text-text-dark mb-2 tracking-widest">RESULTADOS DA BÍBLIA</h4>
+        <p className="font-serif text-xs text-text-muted italic max-w-md mx-auto leading-relaxed">
           "Lâmpada para os meus pés é tua palavra, e luz para o meu caminho."
         </p>
-        <p className="text-[9px] text-navy/20 mt-4">
-          A Palavra Diária &copy; {new Date().getFullYear()}
-        </p>
+        <div className="mt-8 flex items-center justify-center gap-4">
+          <div className="w-8 h-[1px] bg-text-muted/10" />
+          <p className="text-[10px] text-text-muted/40 font-bold tracking-[0.2em] uppercase">
+            A Palavra Diária &copy; {new Date().getFullYear()}
+          </p>
+          <div className="w-8 h-[1px] bg-text-muted/10" />
+        </div>
       </footer>
     </div>
   );
