@@ -481,16 +481,11 @@ export default function App() {
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
 
-          // Cap resolution at 1080p height for high quality
-          const targetHeight = 1920;
-          const originalWidth = renderVideo.videoWidth || 1080;
-          const originalHeight = renderVideo.videoHeight || 1920;
-          const aspectRatio = originalWidth / originalHeight;
+          // Set resolution to 1080x1920 for high quality 9:16 output
+          canvas.height = 1920;
+          canvas.width = 1080;
           
-          canvas.height = Math.min(originalHeight, targetHeight);
-          canvas.width = Math.round(canvas.height * aspectRatio);
-          
-          console.log("Dimensões do canvas (Alta Qualidade):", canvas.width, "x", canvas.height);
+          console.log("Dimensões do canvas (Formatado 9:16):", canvas.width, "x", canvas.height);
 
           if (renderVideo.readyState < 3) { 
             await new Promise((resolve) => {
@@ -597,29 +592,49 @@ export default function App() {
 
           // Adjust font sizes based on resolution (scaling from 1080p base)
           const scaleFactor = canvas.width / 1080;
-          const fontSize = Math.round(64 * scaleFactor);
-          const refFontSize = Math.round(48 * scaleFactor);
-          const lineHeight = fontSize * 1.3;
-          const maxWidth = canvas.width - (200 * scaleFactor);
-          ctx.font = `italic ${fontSize}px "Libre Baskerville"`;
+          let baseFontSize = 64 * scaleFactor;
+          
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           
-          const words = selectedVerse!.text.split(' ');
-          let line = '';
-          const lines: string[] = [];
-          for (let n = 0; n < words.length; n++) {
-            let testLine = line + words[n] + ' ';
-            if (ctx.measureText(testLine).width > maxWidth && n > 0) {
-              lines.push(line.trim());
-              line = words[n] + ' ';
-            } else {
-              line = testLine;
+          // Re-calculate lines based on correct font and adaptive sizing
+          const calculateLines = (fSize: number) => {
+            ctx.font = `italic ${fSize}px "Cinzel"`;
+            const padding = canvas.width * 0.15; // 15% padding on each side
+            const maxWidth = canvas.width - (padding * 2);
+            const words = selectedVerse!.text.split(' ');
+            const lines: string[] = [];
+            let currentLine = '';
+            
+            for (let n = 0; n < words.length; n++) {
+              let testLine = currentLine + words[n] + ' ';
+              let metrics = ctx.measureText(testLine.trim());
+              if (metrics.width > maxWidth && n > 0) {
+                lines.push(currentLine.trim());
+                currentLine = words[n] + ' ';
+              } else {
+                currentLine = testLine;
+              }
             }
+            lines.push(currentLine.trim());
+            return lines;
+          };
+
+          let lines = calculateLines(baseFontSize);
+          let lHeight = baseFontSize * 1.4;
+          
+          // If text is too long (too many lines), reduce font size
+          while (lines.length > 7 && baseFontSize > 40 * scaleFactor) {
+            baseFontSize -= 4;
+            lines = calculateLines(baseFontSize);
+            lHeight = baseFontSize * 1.4;
           }
-          lines.push(line.trim());
+
+          const fontSize = baseFontSize;
+          const lineHeight = lHeight;
           const startY = (canvas.height - (lines.length * lineHeight)) / 2;
           const referenceText = selectedVerse!.reference.toUpperCase();
+          const refFontSize = Math.round(fontSize * 0.7);
 
           const maxDuration = videoDuration > 0 ? videoDuration : 30;
           console.log("Iniciando renderização com duração:", maxDuration);
@@ -664,7 +679,23 @@ export default function App() {
               ctx.fillRect(0, 0, canvas.width, canvas.height);
 
               if (renderVideo.readyState >= 2) {
-                ctx.drawImage(renderVideo, 0, 0, canvas.width, canvas.height);
+                // object-fit: cover logic for canvas
+                const vRatio = renderVideo.videoWidth / renderVideo.videoHeight;
+                const cRatio = canvas.width / canvas.height;
+                let sx, sy, sWidth, sHeight;
+
+                if (vRatio > cRatio) {
+                  sHeight = renderVideo.videoHeight;
+                  sWidth = renderVideo.videoHeight * cRatio;
+                  sx = (renderVideo.videoWidth - sWidth) / 2;
+                  sy = 0;
+                } else {
+                  sWidth = renderVideo.videoWidth;
+                  sHeight = renderVideo.videoWidth / cRatio;
+                  sx = 0;
+                  sy = (renderVideo.videoHeight - sHeight) / 2;
+                }
+                ctx.drawImage(renderVideo, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
               }
               
               // Overlay darkness
@@ -690,12 +721,14 @@ export default function App() {
                 ctx.textBaseline = 'middle';
 
                 // Verse Text
-                const verseFont = `italic ${fontSize}px "Libre Baskerville"`;
+                const verseFont = `italic ${fontSize}px "Cinzel"`;
                 ctx.font = verseFont;
                 let currentY = startY;
                 
-                lines.forEach((l) => {
-                  const text = `"${l}"`;
+                lines.forEach((l, i) => {
+                  let text = l;
+                  if (i === 0) text = `"${text}`;
+                  if (i === lines.length - 1) text = `${text}"`;
                   const x = canvas.width / 2;
                   const y = currentY + lineHeight / 2;
                   
@@ -798,8 +831,23 @@ export default function App() {
       });
     }
 
-    // Draw current video frame
-    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    // Draw current video frame with object-cover logic
+    const vRatio = videoRef.current.videoWidth / videoRef.current.videoHeight;
+    const cRatio = canvas.width / canvas.height;
+    let sx, sy, sWidth, sHeight;
+
+    if (vRatio > cRatio) {
+      sHeight = videoRef.current.videoHeight;
+      sWidth = videoRef.current.videoHeight * cRatio;
+      sx = (videoRef.current.videoWidth - sWidth) / 2;
+      sy = 0;
+    } else {
+      sWidth = videoRef.current.videoWidth;
+      sHeight = videoRef.current.videoWidth / cRatio;
+      sx = 0;
+      sy = (videoRef.current.videoHeight - sHeight) / 2;
+    }
+    ctx.drawImage(videoRef.current, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
     
     // Overlay
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
@@ -815,41 +863,61 @@ export default function App() {
       ctx.shadowBlur = 0;
     }
     
-    // Text
-    const fontSize = 64;
-    const lineHeight = fontSize * 1.3;
-    const maxWidth = canvas.width - 200;
-    ctx.font = `italic ${fontSize}px "Libre Baskerville"`;
+    // Text settings with adaptive sizing
+    let baseFontSize = 64;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    
+    const calculateLines = (fSize: number) => {
+      ctx.font = `italic ${fSize}px "Cinzel"`;
+      const padding = canvas.width * 0.15;
+      const maxWidth = canvas.width - (padding * 2);
+      const words = selectedVerse.text.split(' ');
+      const lines: string[] = [];
+      let currentLine = '';
+      
+      for (let n = 0; n < words.length; n++) {
+        let testLine = currentLine + words[n] + ' ';
+        if (ctx.measureText(testLine.trim()).width > maxWidth && n > 0) {
+          lines.push(currentLine.trim());
+          currentLine = words[n] + ' ';
+        } else {
+          currentLine = testLine;
+        }
+      }
+      lines.push(currentLine.trim());
+      return lines;
+    };
+
+    let lines = calculateLines(baseFontSize);
+    let lHeight = baseFontSize * 1.4;
+
+    while (lines.length > 7 && baseFontSize > 40) {
+      baseFontSize -= 4;
+      lines = calculateLines(baseFontSize);
+      lHeight = baseFontSize * 1.4;
+    }
+
+    const fontSize = baseFontSize;
+    const lineHeight = lHeight;
+    ctx.font = `italic ${fontSize}px "Cinzel"`;
     ctx.fillStyle = 'white';
     ctx.shadowColor = 'rgba(0,0,0,0.8)';
     ctx.shadowBlur = 12;
-
-    const words = selectedVerse.text.split(' ');
-    let line = '';
-    const lines: string[] = [];
-    for (let n = 0; n < words.length; n++) {
-      let testLine = line + words[n] + ' ';
-      if (ctx.measureText(testLine).width > maxWidth && n > 0) {
-        lines.push(line.trim());
-        line = words[n] + ' ';
-      } else {
-        line = testLine;
-      }
-    }
-    lines.push(line.trim());
     
     let currentY = (canvas.height - (lines.length * lineHeight)) / 2;
-    lines.forEach((l) => {
-      ctx.fillText(`"${l}"`, canvas.width / 2, currentY + lineHeight / 2);
+    lines.forEach((l, i) => {
+      let text = l;
+      if (i === 0) text = `"${text}`;
+      if (i === lines.length - 1) text = `${text}"`;
+      ctx.fillText(text, canvas.width / 2, currentY + lineHeight / 2);
       currentY += lineHeight;
     });
     
     // Reference
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#D4AF37';
-    ctx.font = 'bold 48px "Cinzel"';
+    ctx.font = `bold ${Math.round(fontSize * 0.7)}px "Cinzel"`;
     ctx.fillText(selectedVerse.reference.toUpperCase(), canvas.width / 2, currentY + 80);
 
     const link = document.createElement('a');
@@ -1190,7 +1258,7 @@ export default function App() {
                           </div>
                         </div>
                         <p className={cn(
-                          "font-serif text-lg leading-relaxed italic",
+                          "font-cinzel text-lg leading-relaxed italic",
                           selectedVerse?.reference === v.reference ? "text-text-dark" : "text-text-muted"
                         )}>
                           "{v.text}"
@@ -1294,7 +1362,7 @@ export default function App() {
                         <span className="font-display text-xs text-gold tracking-widest">{v.reference}</span>
                         <Bookmark className="w-3 h-3 text-gold fill-gold" />
                       </div>
-                      <p className="font-serif text-sm italic text-navy/70 line-clamp-2">"{v.text}"</p>
+                      <p className="font-cinzel text-sm italic text-navy/70 line-clamp-2">"{v.text}"</p>
                     </div>
                   ))
                 )}
@@ -1356,7 +1424,7 @@ export default function App() {
                         className="absolute inset-0 flex items-center justify-center p-10 bg-black/35 pointer-events-none"
                       >
                         <div className="text-center space-y-6 max-w-lg">
-                          <p className="font-serif text-2xl md:text-3xl text-white italic leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                          <p className="font-cinzel text-2xl md:text-3xl text-white italic leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
                             "{selectedVerse.text}"
                           </p>
                           <div className="flex items-center justify-center gap-4">
@@ -1377,7 +1445,7 @@ export default function App() {
                 <div className="w-full h-full flex flex-col items-center justify-center text-white/20 p-12 text-center">
                   <Upload className="w-20 h-20 mb-6 stroke-1" />
                   <p className="font-display text-lg tracking-widest uppercase font-bold">Faça upload de um vídeo</p>
-                  <p className="text-sm mt-3 opacity-50 font-serif italic">O versículo selecionado aparecerá aqui como overlay</p>
+                  <p className="font-cinzel text-sm mt-3 opacity-50 italic">O versículo selecionado aparecerá aqui como overlay</p>
                 </div>
               )}
             </div>
