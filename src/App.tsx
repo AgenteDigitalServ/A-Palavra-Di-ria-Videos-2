@@ -417,6 +417,7 @@ export default function App() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [showRenderOverlay, setShowRenderOverlay] = useState(false);
   const renderCanvasRef = useRef<HTMLCanvasElement>(null);
+  const renderAbortRef = useRef(false);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -433,9 +434,10 @@ export default function App() {
       showToast("Aguarde a detecção da duração do vídeo...");
       return;
     }
+    renderAbortRef.current = false;
     setIsRendering(true);
     setShowRenderOverlay(true);
-    setRenderProgress(1); 
+    setRenderProgress(1);
     setRenderedBlob(null);
   };
 
@@ -505,25 +507,28 @@ export default function App() {
           ctx.drawImage(renderVideo, 0, 0, canvas.width, canvas.height);
 
           let stream: MediaStream;
+          const targetFps = 30;
           try {
-            // Use 60fps for maximum fluidity
-            stream = canvas.captureStream(60);
+            // 30 fps avoids duplicating frames from common phone videos and
+            // leaves more CPU/GPU budget for a cleaner 1080x1920 encode.
+            stream = canvas.captureStream(targetFps);
           } catch (e) {
             try {
-              stream = (canvas as any).captureStream(60);
+              stream = (canvas as any).captureStream(targetFps);
             } catch (e2) {
               throw new Error("Seu dispositivo não suporta gravação de vídeo.");
             }
           }
           
-          // Prioritize MP4 for better compatibility if supported (especially on iOS)
+          // Prefer modern WebM codecs: browsers usually expose VP9/VP8 through
+          // MediaRecorder, while MP4 support is still inconsistent outside Safari.
           const types = [
-            'video/mp4;codecs=h264,aac',
-            'video/mp4;codecs=h264',
-            'video/mp4',
-            'video/webm;codecs=vp8,opus',
             'video/webm;codecs=vp9,opus',
-            'video/webm'
+            'video/webm;codecs=vp8,opus',
+            'video/webm',
+            'video/mp4;codecs=avc1.4d002a,mp4a.40.2',
+            'video/mp4;codecs=h264,aac',
+            'video/mp4'
           ];
           const mimeType = types.find(t => MediaRecorder.isTypeSupported(t)) || '';
           const isWebM = mimeType.includes('webm');
@@ -531,12 +536,23 @@ export default function App() {
           if (!stream || stream.getTracks().length === 0) {
             throw new Error("Falha ao iniciar o fluxo de vídeo.");
           }
+
+          // Keep the original soundtrack when the browser exposes the source
+          // media stream. Canvas captureStream() only contains video tracks.
+          try {
+            const sourceStream = (renderVideo as HTMLVideoElement & { captureStream?: () => MediaStream; mozCaptureStream?: () => MediaStream }).captureStream?.()
+              ?? (renderVideo as HTMLVideoElement & { mozCaptureStream?: () => MediaStream }).mozCaptureStream?.();
+            sourceStream?.getAudioTracks().forEach(track => stream.addTrack(track));
+          } catch (audioError) {
+            console.warn('Não foi possível anexar o áudio original:', audioError);
+          }
           
           let recorder: MediaRecorder;
           try {
             recorder = new MediaRecorder(stream, { 
               mimeType: mimeType || undefined,
-              videoBitsPerSecond: 12000000 // 12 Mbps for high quality
+              videoBitsPerSecond: 20000000,
+              audioBitsPerSecond: 128000
             });
           } catch (err) {
             throw new Error("Erro ao configurar o gravador de vídeo.");
@@ -550,7 +566,13 @@ export default function App() {
           };
 
           recorder.onstop = async () => {
+            stream.getTracks().forEach(track => track.stop());
             setShowRenderOverlay(false);
+            if (renderAbortRef.current) {
+              setIsRendering(false);
+              setRenderProgress(0);
+              return;
+            }
             if (chunks.length === 0) {
               showToast("Falha na captura. Tente novamente.");
               setIsRendering(false);
@@ -559,7 +581,12 @@ export default function App() {
 
             // Ensure the final blob has the correct mime type
             const rawBlob = new Blob(chunks, { type: mimeType || 'video/mp4' });
-            const finalDurationMs = Math.round(maxDuration * 1000);
+            // Use the real elapsed capture time. The source duration may be
+            // rounded or unavailable on mobile, while WebM metadata must match
+            // the timestamps actually emitted by MediaRecorder.
+            const finalDurationMs = Math.max(1, Math.round(
+              renderStartTime > 0 ? (renderStopTime || performance.now()) - renderStartTime : maxDuration * 1000
+            ));
             
             console.log("Final blob size:", rawBlob.size, "Type:", rawBlob.type);
 
@@ -639,9 +666,10 @@ export default function App() {
           const maxDuration = videoDuration > 0 ? videoDuration : 30;
           console.log("Iniciando renderização com duração:", maxDuration);
           let renderStartTime = 0;
-          let framesDrawn = 0;
+          let renderStopTime = 0;
           
           renderVideo.currentTime = 0;
+          renderVideo.playbackRate = 1;
           // Only loop if we are forcing a duration longer than the video
           renderVideo.loop = maxDuration > videoDuration + 0.5;
           
@@ -650,20 +678,23 @@ export default function App() {
             await renderVideo!.play();
           });
 
-          let lastVideoTime = -1;
-          let lastCheckTime = Date.now();
-
-          const fps = 60;
+          const fps = targetFps;
           const frameInterval = 1000 / fps;
-          let lastFrameTime = Date.now();
+          let lastFrameTime = performance.now();
+
+          // Start recording immediately after playback is ready. Starting the
+          // recorder several frames later can leave a timestamp gap in WebM
+          // and makes some players interpret the result as slow motion.
+          renderStartTime = performance.now();
+          recorder.start(1000);
 
           const renderLoop = () => {
-            if (!isRendering || !canvas || !ctx || !renderVideo) {
+            if (renderAbortRef.current || !isRendering || !canvas || !ctx || !renderVideo) {
               if (recorder && recorder.state !== 'inactive') recorder.stop();
               return;
             }
 
-            const now = Date.now();
+            const now = performance.now();
             const elapsed = now - lastFrameTime;
 
             // Draw as fast as possible but cap at target FPS
@@ -769,15 +800,8 @@ export default function App() {
                 ctx.lineTo(canvas.width / 2 + offset + lineLength, refY);
                 ctx.stroke();
 
-              framesDrawn++;
-              // Start recording after a few frames to ensure stability
-              if (framesDrawn === 10 && recorder.state === 'inactive') {
-                renderStartTime = Date.now();
-                recorder.start();
-              }
-
               if (renderStartTime > 0) {
-                const nowRender = Date.now();
+                const nowRender = performance.now();
                 const elapsedSeconds = (nowRender - renderStartTime) / 1000;
                 
                 // Ensure video keeps playing
@@ -787,6 +811,7 @@ export default function App() {
 
                 if (elapsedSeconds >= maxDuration) {
                   if (recorder && recorder.state !== 'inactive') {
+                    renderStopTime = performance.now();
                     recorder.stop();
                   }
                   return;
@@ -801,6 +826,7 @@ export default function App() {
           };
           renderLoop();
         } catch (error: any) {
+          if (renderAbortRef.current) return;
           console.error("Render failed", error);
           showToast(error.message || "Erro na renderização.");
           setIsRendering(false);
@@ -1036,6 +1062,7 @@ export default function App() {
             </div>
             <button 
               onClick={() => {
+                renderAbortRef.current = true;
                 setIsRendering(false);
                 setShowRenderOverlay(false);
               }}
