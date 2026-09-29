@@ -488,6 +488,7 @@ export default function App() {
           canvas.width = 1080;
           
           console.log("Dimensões do canvas (Formatado 9:16):", canvas.width, "x", canvas.height);
+          const maxDuration = videoDuration > 0 ? videoDuration : 30;
 
           if (renderVideo.readyState < 3) { 
             await new Promise((resolve) => {
@@ -537,12 +538,24 @@ export default function App() {
             throw new Error("Falha ao iniciar o fluxo de vídeo.");
           }
 
-          // Keep the original soundtrack when the browser exposes the source
-          // media stream. Canvas captureStream() only contains video tracks.
+          // Canvas captureStream() only contains video tracks. Attach the
+          // original audio only when the media element's duration agrees with
+          // the duration being rendered. Some WhatsApp/mobile files contain a
+          // short video stream plus a much longer audio stream; combining them
+          // makes players hold the last frame and look like slow motion.
           try {
-            const sourceStream = (renderVideo as HTMLVideoElement & { captureStream?: () => MediaStream; mozCaptureStream?: () => MediaStream }).captureStream?.()
-              ?? (renderVideo as HTMLVideoElement & { mozCaptureStream?: () => MediaStream }).mozCaptureStream?.();
-            sourceStream?.getAudioTracks().forEach(track => stream.addTrack(track));
+            const sourceDuration = Number.isFinite(renderVideo.duration) ? renderVideo.duration : 0;
+            const durationMatches = sourceDuration > 0 && Math.abs(sourceDuration - maxDuration) <= 0.5;
+            if (durationMatches) {
+              const sourceStream = (renderVideo as HTMLVideoElement & { captureStream?: () => MediaStream; mozCaptureStream?: () => MediaStream }).captureStream?.()
+                ?? (renderVideo as HTMLVideoElement & { mozCaptureStream?: () => MediaStream }).mozCaptureStream?.();
+              sourceStream?.getAudioTracks().forEach(track => stream.addTrack(track));
+            } else {
+              console.warn('Áudio original ignorado por duração incompatível:', {
+                sourceDuration,
+                renderDuration: maxDuration
+              });
+            }
           } catch (audioError) {
             console.warn('Não foi possível anexar o áudio original:', audioError);
           }
@@ -663,7 +676,6 @@ export default function App() {
           const referenceText = selectedVerse!.reference.toUpperCase();
           const refFontSize = Math.round(fontSize * 0.7);
 
-          const maxDuration = videoDuration > 0 ? videoDuration : 30;
           console.log("Iniciando renderização com duração:", maxDuration);
           let renderStartTime = 0;
           let renderStopTime = 0;
